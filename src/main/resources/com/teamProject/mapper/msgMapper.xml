@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.teamProject.mapper.msgMapper">
+
+	<select id="roomCheck_send" parameterType="String" resultType="String">
+		SELECT * FROM MSGLIST WHERE MYNICK = #{mynick} AND YOURNICK=#{yournick}
+	</select>
+	
+	<select id="roomCheck_recive" parameterType="String" resultType="String">
+		SELECT * FROM MSGLIST WHERE MYNICK = #{yournick} AND YOURNICK=#{mynick}
+	</select>
+
+	<insert id="creatChatRoom_send" parameterType="String">
+		INSERT INTO MSGLIST VALUES(#{mynick},#{yournick})
+	</insert>
+	
+	<insert id="creatChatRoom_recive" parameterType="String">
+		INSERT INTO MSGLIST VALUES(#{yournick},#{mynick})
+	</insert>
+	
+	<select id="getMsg" parameterType="String" resultMap="msg">
+		SELECT MESSAGE.*,TO_CHAR(MSGTIME,'HH24:MI') AS MSGTIMESET FROM
+		MESSAGE WHERE (MSGSENDER IN #{mynick} or MSGSENDER IN #{yournick}) AND (MSGRECIPIENT IN #{mynick} or MSGRECIPIENT IN #{yournick})
+		ORDER BY MSGNUM
+	</select>
+	
+	<select id="saveMsg_getNum" resultType="int">
+		SELECT NVL(MAX(MSGNUM),0) FROM MESSAGE
+	</select>
+	
+	<insert id="saveMsg" parameterType="com.teamProject.DTO.messageDTO">
+		INSERT INTO MESSAGE VALUES(#{msgnum},#{msgsender},#{msgrecipient},#{msgcontent},SYSDATE,1)
+	</insert>
+	
+	<select id="setChatRoom" parameterType="String" resultMap="msgList">
+		SELECT * FROM MSGLIST WHERE MYNICK=#{loginId}
+	</select>
+	
+	<update id="chkMsg" parameterType="String">
+		UPDATE  MESSAGE SET MSGCHECK = 0 WHERE MSGSENDER = #{yournick} and MSGRECIPIENT = #{mynick}
+		
+	</update>
+	
+	<select id="getMsgCount" parameterType="com.teamProject.DTO.messageDTO" resultType="int"> 
+		SELECT NVL(COUNT(*),0) FROM MESSAGE WHERE MSGSENDER = #{msgsender} and MSGRECIPIENT = #{msgrecipient} AND MSGCHECK=1
+	</select>
+	
+	<select id="getMsgCount2" parameterType="com.teamProject.DTO.msgListDTO" resultType="int"> 
+		SELECT NVL(COUNT(*),0) FROM MESSAGE WHERE MSGSENDER = #{yournick} and MSGRECIPIENT = #{mynick} AND MSGCHECK=1
+	</select>
+
+	<select id="getTime" parameterType="com.teamProject.DTO.messageDTO" resultType="String">
+		SELECT TO_CHAR(MSGTIME,'HH24:MI') AS MSGTIME FROM MESSAGE where MSGNUM=#{msgnum}
+	</select>
+	
+	<select id="getHistoryTime" parameterType="String" resultType="String">
+		SELECT * FROM(SELECT trunc(((SYSDATE-TO_DATE(TO_CHAR(MSGTIME,'yy-mm-dd hh24:mi:ss'),'yy-mm-dd hh24:mi:ss'))*24*60),0) msgtimeSet 
+		FROM MESSAGE WHERE (MSGSENDER IN #{mynick} or MSGSENDER IN #{yournick}) AND (MSGRECIPIENT IN #{mynick} or MSGRECIPIENT IN #{yournick})
+		ORDER BY MSGNUM desc)WHERE ROWNUM = 1
+	</select>
+  <resultMap type="com.teamProject.DTO.messageDTO" id="msg">
+  		<result property="msgnum" column="MSGNUM" />
+  		<result property="msgsender" column="MSGSENDER" />
+  		<result property="msgrecipient" column="MSGRECIPIENT" />
+  		<result property="msgcontent" column="MSGCONTENT" />
+  		<result property="msgtime" column="MSGTIME" />
+  		<result property="msgcheck" column="MSGCHECK" />
+  		<result property="msgtimeSet" column="MSGTIMESET" />
+  </resultMap>
+  
+    <resultMap type="com.teamProject.DTO.msgListDTO" id="msgList">
+  		<result property="mynick" column="MYNICK" />
+  		<result property="yournick" column="YOURNICK" />
+  </resultMap>
+  
+  </mapper>
